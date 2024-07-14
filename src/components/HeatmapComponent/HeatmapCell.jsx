@@ -1,5 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 
 const HeatmapCell = ({
   speaker,
@@ -27,34 +29,41 @@ const HeatmapCell = ({
 
   const handleMouseEnter = () => {
     onMouseEnter({ text, start, end, wordFrequency, confidence });
-    // Additional logic if needed
   };
 
   const handleMouseLeave = () => {
     onMouseLeave();
-    // Additional logic if needed
   };
 
   const handleClick = () => {
     onClick({ text, start, end, wordFrequency, confidence });
-    // Additional logic if needed
   };
 
   return (
+    <Tooltip
+    title={
+      <React.Fragment>
+        <Typography variant="body2"><strong>Text:</strong> {text}</Typography>
+        <Typography variant="body2"><strong>Start:</strong> {start}ms</Typography>
+        <Typography variant="body2"><strong>End:</strong> {end}ms</Typography>
+        <Typography variant="body2"><strong>Word Frequency:</strong> {wordFrequency}</Typography>
+        <Typography variant="body2"><strong>Confidence:</strong> {confidence}</Typography>
+      </React.Fragment>
+    }
+    enterDelay={500} // Optional: Adjust tooltip delay
+    arrow
+  >
+
     <div
       className="heatmap-cell"
-      style={{
-        backgroundColor: getColor(),
-        width: '10px',
-        height: '10px',
-        margin: '1px',
-      }}
+      style={{ backgroundColor: getColor() }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
     >
       {/* Optional: Add content or leave empty for visual representation */}
     </div>
+    </Tooltip>
   );
 };
 

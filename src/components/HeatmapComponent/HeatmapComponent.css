@@ -10,7 +10,7 @@
 /* Grid styling for the heatmap */
 .heatmap-grid {
   display: grid; /* Use CSS grid for better control */
-  grid-template-columns: repeat(auto-fill, minmax(11px, 1fr)); /* Adjust based on your requirements */
+  grid-template-columns: repeat(auto-fill, minmax(10px, 1fr)); /* Adjust based on your requirements */
   gap: 1px; /* Adjust gap between cells as needed */
   width: 545px; /* Fixed width of the heatmap grid */
   height: 810px; /* Fixed height of the heatmap grid */
@@ -23,15 +23,16 @@
   box-sizing: border-box;
   height: 40px; /* Height of each heatmap cell */
   background-color: #ffffff; /* Default background color */
+  /*width: calc(100% / 10);  Adjust cell width based on number of cells per row */
 }
 
 /* Tooltip styling */
-.heatmap-tooltip {
-  position: absolute;
-  background-color: white;
-  border: 1px solid black;
-  padding: 5px;
-  pointer-events: none;
-  z-index: 999; /* Ensure tooltip appears above other elements */
-  /* Additional positioning and styling as needed */
+.heatmap-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
