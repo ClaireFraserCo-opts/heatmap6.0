@@ -1,6 +1,20 @@
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import PropTypes from 'prop-types';
+import styled from 'styled-components';
+
+// Define styled components
+const HeatmapContainer = styled.div`
+  position: relative;
+`;
+
+const HeatmapSvg = styled.svg`
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 1; /* Adjust as needed */
+`;
 
 const HeatmapD3 = ({ sessionData }) => {
   const svgRef = useRef(null);
@@ -38,7 +52,7 @@ const HeatmapD3 = ({ sessionData }) => {
       .attr("y", d => y(d.speaker))
       .attr("width", x.bandwidth())
       .attr("height", y.bandwidth())
-      .attr("fill", d => color(d.isSilence ? 0 : 1)) // Example fill based on isSilence
+      .attr("fill", d => color(d.isSilence ? 0 : 1)) // Handle undefined isSilence
       .on("mouseover", (event, d) => {
         console.log(`Mouseover on ${d.text}`);
       })
@@ -46,18 +60,18 @@ const HeatmapD3 = ({ sessionData }) => {
         console.log("Mouseout");
       });
 
-    // Optionally, return a cleanup function if needed
     return () => {
-      // Cleanup logic, if any
-      svg.selectAll("rect").remove(); // Remove all rects on unmount or data change
+      svg.selectAll("rect").remove();
     };
 
   }, [sessionData]);
 
   return (
-    <svg ref={svgRef} width={500} height={300}>
-      {/* SVG content rendered by D3 */}
-    </svg>
+    <HeatmapContainer>
+      <HeatmapSvg ref={svgRef} width={500} height={300}>
+        {/* SVG content */}
+      </HeatmapSvg>
+    </HeatmapContainer>
   );
 };
 
@@ -65,7 +79,7 @@ HeatmapD3.propTypes = {
   sessionData: PropTypes.arrayOf(
     PropTypes.shape({
       speaker: PropTypes.string.isRequired,
-      isSilence: PropTypes.bool.isRequired,
+      isSilence: PropTypes.bool, // Make isSilence optional
       text: PropTypes.string.isRequired,
       start: PropTypes.number.isRequired,
       end: PropTypes.number.isRequired,

@@ -1,6 +1,4 @@
 // src/components/HeatmapComponent/HeatmapTooltip.js
-// This component will display the tooltip content when hovering over a cell.
-
 import React from 'react';
 import PropTypes from 'prop-types';
 
@@ -29,7 +27,7 @@ HeatmapTooltip.propTypes = {
     end: PropTypes.number.isRequired,
     wordFrequency: PropTypes.number,
     confidence: PropTypes.number,
-  }).isRequired,
+  }),
 };
 
 export default HeatmapTooltip;
