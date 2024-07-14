@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import HeatmapCell from './HeatmapCell';
 import HeatmapTooltip from './HeatmapTooltip';
-import HeatmapD3 from '../HeatmapD3/HeatmapD3';
 
 import './HeatmapComponent.css';
 
@@ -80,14 +79,16 @@ const HeatmapComponent = () => {
         start: utterance.start,
         end: utterance.end,
         wordFrequency: utterance.word_count || 0,
-        confidence: utterance.confidence || 0
+        confidence: utterance.confidence || 0,
+        isSilence: utterance.isSilence || false // Ensure isSilence is defined
       })).concat(data.words.map(word => ({
         speaker: word.speaker,
         text: word.text,
         start: word.start,
         end: word.end,
         wordFrequency: 1, // Adjust as needed
-        confidence: word.confidence || 0
+        confidence: word.confidence || 0,
+        isSilence: word.isSilence || false // Ensure isSilence is defined
       })));
     } else {
       console.log('Unexpected data structure or empty array:', data);
@@ -96,8 +97,6 @@ const HeatmapComponent = () => {
   
     return combinedData;
   };
-  
-  
   
   const handleMouseEnter = (cellData) => {
     setTooltipContent(cellData);
@@ -121,7 +120,6 @@ const HeatmapComponent = () => {
 
   return (
     <div className="heatmap-container">
-      {/* Dropdown to select file */}
       <div className="file-dropdown">
         <select value={selectedFile || ''} onChange={handleFileChange}>
           {fileList.map((fileName) => (
@@ -132,10 +130,6 @@ const HeatmapComponent = () => {
         </select>
       </div>
 
-      {/* Render D3.js heatmap */}
-      <HeatmapD3 sessionData={sessionData} />
-
-      {/* Render HeatmapCell */}
       <div className="heatmap-grid">
         {isLoading ? (
           <p>Loading...</p>
@@ -160,7 +154,6 @@ const HeatmapComponent = () => {
         )}
       </div>
 
-      {/* Heatmap tooltip component (optional) */}
       {tooltipContent && <HeatmapTooltip data={tooltipContent} />}
     </div>
   );
