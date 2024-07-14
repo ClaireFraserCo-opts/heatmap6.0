@@ -14,9 +14,6 @@ function App() {
       <main className="App-main">
         <HeatmapComponent /> {/* Render your main component here */}
       </main>
-      <footer className="App-footer">
-        <p>Footer content goes here</p>
-      </footer>
     </div>
   );
 }

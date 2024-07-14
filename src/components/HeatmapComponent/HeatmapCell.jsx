@@ -25,6 +25,21 @@ const HeatmapCell = ({
     }
   };
 
+  const handleMouseEnter = () => {
+    onMouseEnter({ text, start, end, wordFrequency, confidence });
+    // Additional logic if needed
+  };
+
+  const handleMouseLeave = () => {
+    onMouseLeave();
+    // Additional logic if needed
+  };
+
+  const handleClick = () => {
+    onClick({ text, start, end, wordFrequency, confidence });
+    // Additional logic if needed
+  };
+
   return (
     <div
       className="heatmap-cell"
@@ -34,11 +49,9 @@ const HeatmapCell = ({
         height: '10px',
         margin: '1px',
       }}
-      onMouseEnter={() =>
-        onMouseEnter({ text, start, end, wordFrequency, confidence })
-      }
-      onMouseLeave={onMouseLeave}
-      onClick={() => onClick({ text, start, end, wordFrequency, confidence })}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
     >
       {/* Optional: Add content or leave empty for visual representation */}
     </div>
