@@ -1,27 +1,37 @@
-/* src/components/HeatmapComponent/HeatmapComponent.css: */
+/* src/components/HeatmapComponent/HeatmapComponent.css */
 
-.heatmap {
-    position: relative;
-  }
-  
-  .heatmap-grid {
-    display: flex;
-    flex-wrap: wrap;
-    width: 100%;
-    max-width: 545px;
-    max-height: 810px;
-  }
-  
-  .heatmap-cell {
-    box-sizing: border-box;
-  }
-  
-  .heatmap-tooltip {
-    position: absolute;
-    background-color: white;
-    border: 1px solid black;
-    padding: 5px;
-    pointer-events: none;
-    /* Position and style your tooltip as needed */
-  }
-  
+/* Ensure the heatmap container is properly styled */
+.heatmap-container {
+  position: relative; /* Ensure proper positioning */
+  width: 100%; /* Adjust as needed */
+  height: 100%; /* Adjust as needed */
+}
+
+/* Grid styling for the heatmap */
+.heatmap-grid {
+  display: grid; /* Use CSS grid for better control */
+  grid-template-columns: repeat(auto-fill, minmax(11px, 1fr)); /* Adjust based on your requirements */
+  gap: 1px; /* Adjust gap between cells as needed */
+  width: 545px; /* Fixed width of the heatmap grid */
+  height: 810px; /* Fixed height of the heatmap grid */
+  border: 1px solid #ccc; /* Optional: Add a border around the grid */
+  overflow: auto; /* Ensure overflow behavior is as expected */
+}
+
+/* Style for each individual heatmap cell */
+.heatmap-cell {
+  box-sizing: border-box;
+  height: 40px; /* Height of each heatmap cell */
+  background-color: #ffffff; /* Default background color */
+}
+
+/* Tooltip styling */
+.heatmap-tooltip {
+  position: absolute;
+  background-color: white;
+  border: 1px solid black;
+  padding: 5px;
+  pointer-events: none;
+  z-index: 999; /* Ensure tooltip appears above other elements */
+  /* Additional positioning and styling as needed */
+}

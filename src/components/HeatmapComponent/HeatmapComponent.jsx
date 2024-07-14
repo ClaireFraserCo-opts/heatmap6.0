@@ -53,7 +53,7 @@ const HeatmapComponent = () => {
         throw new Error(`Failed to fetch ${fileName}: ${response.status} ${response.statusText}`);
       }
       const data = await response.json();
-  
+
       if (data.utterances && data.words) {
         const combinedData = processSessionData(data);
         setSessionData(combinedData);
@@ -68,10 +68,10 @@ const HeatmapComponent = () => {
       setIsLoading(false);
     }
   };
-  
+
   const processSessionData = (data) => {
     let combinedData = [];
-  
+
     if (data.utterances && data.words) {
       combinedData = data.utterances.map(utterance => ({
         speaker: utterance.speaker,
@@ -94,10 +94,10 @@ const HeatmapComponent = () => {
       console.log('Unexpected data structure or empty array:', data);
       // Handle unexpected data structure or empty array if needed
     }
-  
+
     return combinedData;
   };
-  
+
   const handleMouseEnter = (cellData) => {
     setTooltipContent(cellData);
     setHoveredCell(cellData);
