@@ -1,0 +1,27 @@
+/* src/components/HeatmapComponent/HeatmapComponent.css: */
+
+.heatmap {
+    position: relative;
+  }
+  
+  .heatmap-grid {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 545px;
+    max-height: 810px;
+  }
+  
+  .heatmap-cell {
+    box-sizing: border-box;
+  }
+  
+  .heatmap-tooltip {
+    position: absolute;
+    background-color: white;
+    border: 1px solid black;
+    padding: 5px;
+    pointer-events: none;
+    /* Position and style your tooltip as needed */
+  }
+  
