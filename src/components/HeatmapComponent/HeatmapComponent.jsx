@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import * as d3 from 'd3';
+import HeatmapTooltip from './HeatmapTooltip';
 import './HeatmapComponent.css';
 
 const HeatmapComponent = () => {
@@ -8,6 +9,9 @@ const HeatmapComponent = () => {
   const [fileList, setFileList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [tooltipContent, setTooltipContent] = useState(null);
+  const [mouseX, setMouseX] = useState(0);
+  const [mouseY, setMouseY] = useState(0);
+
   const heatmapRef = useRef(null);
 
   useEffect(() => {
@@ -117,9 +121,11 @@ const HeatmapComponent = () => {
       .attr('fill', d => d.isSilence ? 'gray' : colorScale(d.speaker))
       .on('mouseover', (event, d) => {
         setTooltipContent(d);
+        setMouseX(event.pageX);
+        setMouseY(event.pageY);
         d3.select('.heatmap-tooltip')
-          .style('left', `${event.pageX + 5}px`)
-          .style('top', `${event.pageY - 28}px`)
+          .style('left', `${Math.min(event.pageX + 5, window.innerWidth - 210)}px`)
+          .style('top', `${Math.min(event.pageY - 28, window.innerHeight - 100)}px`)
           .style('display', 'inline-block');
       })
       .on('mouseout', () => {
@@ -145,16 +151,16 @@ const HeatmapComponent = () => {
         </select>
       </div>
 
-      <svg ref={heatmapRef} width="545" height="810" className="heatmap"></svg>
-      {tooltipContent && (
-        <div className="heatmap-tooltip">
-          <p><strong>Text:</strong> {tooltipContent.text}</p>
-          <p><strong>Start:</strong> {tooltipContent.start}ms</p>
-          <p><strong>End:</strong> {tooltipContent.end}ms</p>
-          <p><strong>Word Frequency:</strong> {tooltipContent.wordFrequency}</p>
-          <p><strong>Confidence:</strong> {tooltipContent.confidence}</p>
-        </div>
-      )}
+      <div className="heatmap">
+        {isLoading ? (
+          <p>Loading...</p>
+        ) : (
+          <svg ref={heatmapRef} width="100%" height="100%" viewBox="0 0 545 810" preserveAspectRatio="xMinYMin meet" />
+        )}
+        {tooltipContent && (
+          <HeatmapTooltip content={tooltipContent} mouseX={mouseX} mouseY={mouseY} />
+        )}
+      </div>
     </div>
   );
 };
