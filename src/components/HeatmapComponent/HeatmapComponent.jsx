@@ -1,28 +1,31 @@
-import React, { useEffect, useState } from 'react';
-import HeatmapCell from './HeatmapCell';
-import HeatmapTooltip from './HeatmapTooltip';
+import React, { useEffect, useState, useRef } from 'react';
+import * as d3 from 'd3';
 import './HeatmapComponent.css';
 
 const HeatmapComponent = () => {
-  const [sessionData, setSessionData] = useState([]); // State to store session data
-  const [selectedFile, setSelectedFile] = useState(''); // State to store selected file
-  const [fileList, setFileList] = useState([]); // State to store list of files
-  const [isLoading, setIsLoading] = useState(false); // State to manage loading state
-  const [tooltipContent, setTooltipContent] = useState(null); // State to manage tooltip content
-  const [mouseX, setMouseX] = useState(0); // State to store mouse X coordinate
-  const [mouseY, setMouseY] = useState(0); // State to store mouse Y coordinate
+  const [sessionData, setSessionData] = useState([]);
+  const [selectedFile, setSelectedFile] = useState('');
+  const [fileList, setFileList] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [tooltipContent, setTooltipContent] = useState(null);
+  const heatmapRef = useRef(null);
 
   useEffect(() => {
-    fetchFileList(); // Fetch file list on component mount
+    fetchFileList();
   }, []);
 
   useEffect(() => {
     if (selectedFile) {
-      fetchSessionData(selectedFile); // Fetch session data when selected file changes
+      fetchSessionData(selectedFile);
     }
   }, [selectedFile]);
 
-  // Fetch file list from server
+  useEffect(() => {
+    if (sessionData.length > 0) {
+      renderHeatmap();
+    }
+  }, [sessionData]);
+
   const fetchFileList = async () => {
     try {
       const response = await fetch('/data/fileList.json');
@@ -30,12 +33,8 @@ const HeatmapComponent = () => {
         throw new Error('Failed to fetch file list');
       }
       const data = await response.json();
-
-      // Exclude 'fileList.json' from the list of files
       const filteredFileList = data.filter(fileName => fileName !== 'fileList.json');
       setFileList(filteredFileList);
-
-      // Set default selected file if files are available
       if (filteredFileList.length > 0) {
         setSelectedFile(filteredFileList[0]);
       } else {
@@ -46,7 +45,6 @@ const HeatmapComponent = () => {
     }
   };
 
-  // Fetch session data for the selected file
   const fetchSessionData = async (fileName) => {
     setIsLoading(true);
     try {
@@ -55,8 +53,6 @@ const HeatmapComponent = () => {
         throw new Error(`Failed to fetch ${fileName}: ${response.status} ${response.statusText}`);
       }
       const data = await response.json();
-
-      // Process fetched data into combined session data
       if (data.utterances && data.words) {
         const combinedData = processSessionData(data);
         setSessionData(combinedData);
@@ -71,7 +67,6 @@ const HeatmapComponent = () => {
     }
   };
 
-  // Process raw data into combined session data format
   const processSessionData = (data) => {
     let combinedData = [];
     if (data.utterances && data.words) {
@@ -98,28 +93,44 @@ const HeatmapComponent = () => {
     return combinedData;
   };
 
-  // Handle mouse enter event on heatmap cell
-  const handleMouseEnter = (cellData, event) => {
-    setTooltipContent(cellData); // Set tooltip content to current cell data
-    setMouseX(event.clientX); // Update mouse X coordinate
-    setMouseY(event.clientY); // Update mouse Y coordinate
+  const renderHeatmap = () => {
+    const svg = d3.select(heatmapRef.current);
+    svg.selectAll('*').remove();
+
+    const width = 545;
+    const height = 810;
+    const cellSize = 30;
+    const cols = Math.floor(width / cellSize);
+
+    const colorScale = d3.scaleOrdinal()
+      .domain(['silence', 'A', 'B'])
+      .range(['gray', 'blue', 'green']);
+
+    const cells = svg.selectAll('rect')
+      .data(sessionData)
+      .enter()
+      .append('rect')
+      .attr('x', (d, i) => (i % cols) * cellSize)
+      .attr('y', (d, i) => Math.floor(i / cols) * cellSize)
+      .attr('width', cellSize)
+      .attr('height', cellSize)
+      .attr('fill', d => d.isSilence ? 'gray' : colorScale(d.speaker))
+      .on('mouseover', (event, d) => {
+        setTooltipContent(d);
+        d3.select('.heatmap-tooltip')
+          .style('left', `${event.pageX + 5}px`)
+          .style('top', `${event.pageY - 28}px`)
+          .style('display', 'inline-block');
+      })
+      .on('mouseout', () => {
+        d3.select('.heatmap-tooltip')
+          .style('display', 'none');
+      });
   };
 
-  // Handle mouse leave event on heatmap cell
-  const handleMouseLeave = () => {
-    setTooltipContent(null); // Clear tooltip content on mouse leave
-  };
-
-  // Handle click event on heatmap cell
-  const handleClick = (cellData) => {
-    console.log(cellData); // Log cell data to console on click (optional)
-    // Handle click interactions if needed
-  };
-
-  // Handle file change event in dropdown
   const handleFileChange = (event) => {
     const selectedFileName = event.target.value;
-    setSelectedFile(selectedFileName); // Update selected file state
+    setSelectedFile(selectedFileName);
   };
 
   return (
@@ -134,32 +145,16 @@ const HeatmapComponent = () => {
         </select>
       </div>
 
-      <div className="heatmap">
-        {isLoading ? ( // Render loading message if data is loading
-          <p>Loading...</p>
-        ) : (
-          <div className="heatmap-grid">
-            {sessionData.map((cell, index) => (
-              <HeatmapCell
-                key={index}
-                speaker={cell.speaker}
-                isSilence={cell.isSilence}
-                text={cell.text}
-                start={cell.start}
-                end={cell.end}
-                wordFrequency={cell.wordFrequency}
-                confidence={cell.confidence}
-                onMouseEnter={(event) => handleMouseEnter(cell, event)} // Pass current cell data and event to mouse enter handler
-                onMouseLeave={handleMouseLeave} // Attach mouse leave handler
-                onClick={() => handleClick(cell)} // Attach click handler
-              />
-            ))}
-          </div>
-        )}
-        {tooltipContent && ( // Render tooltip if tooltip content is available
-          <HeatmapTooltip content={tooltipContent} mouseX={mouseX} mouseY={mouseY} />
-        )}
-      </div>
+      <svg ref={heatmapRef} width="545" height="810" className="heatmap"></svg>
+      {tooltipContent && (
+        <div className="heatmap-tooltip">
+          <p><strong>Text:</strong> {tooltipContent.text}</p>
+          <p><strong>Start:</strong> {tooltipContent.start}ms</p>
+          <p><strong>End:</strong> {tooltipContent.end}ms</p>
+          <p><strong>Word Frequency:</strong> {tooltipContent.wordFrequency}</p>
+          <p><strong>Confidence:</strong> {tooltipContent.confidence}</p>
+        </div>
+      )}
     </div>
   );
 };
