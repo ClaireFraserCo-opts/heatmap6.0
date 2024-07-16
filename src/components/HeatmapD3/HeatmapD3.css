@@ -1,13 +1,24 @@
-/* HeatmapD3.css */
-.heatmapContainer {
-    position: relative;
-  }
-  
-  .heatmapSvg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    pointer-events: none;
-    z-index: 1; /* Adjust as needed */
-  }
-  
+/* src/components/HeatmapD3/HeatmapD3.css */
+
+/* Main container for the D3 heatmap */
+.heatmap-d3-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+/* Tooltip styling */
+.heatmap-tooltip {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #ccc;
+  padding: 5px;
+  border-radius: 4px;
+  pointer-events: none;
+  font-size: 12px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}

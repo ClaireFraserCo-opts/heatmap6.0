@@ -2,6 +2,9 @@ import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
+import './HeatmapD3.css';
+import { getColorScale, getShadedColor } from '../../utils/colorUtils';
+import HeatmapTooltip from '../HeatmapComponent/HeatmapTooltip'; // Adjust path if needed
 
 // Define styled components
 const HeatmapContainer = styled.div`
@@ -20,73 +23,95 @@ const HeatmapD3 = ({ sessionData }) => {
   const svgRef = useRef(null);
 
   useEffect(() => {
-    if (!sessionData || sessionData.length === 0 || !sessionData[0].speaker) {
+    if (!sessionData || sessionData.length === 0) {
+      console.log('No session data available.');
       return; // Exit early if sessionData is not ready
     }
 
-    const svg = d3.select(svgRef.current);
-    if (!svg) return; // Exit early if svgRef.current is null
+    console.log('Session data:', sessionData);
 
-    const margin = { top: 20, right: 30, bottom: 30, left: 40 };
-    const width = svgRef.current.clientWidth - margin.left - margin.right;
-    const height = svgRef.current.clientHeight - margin.top - margin.bottom;
+    // Define margins and dimensions
+    const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+    const width = 500 - margin.left - margin.right;
+    const height = 300 - margin.top - margin.bottom;
 
-    const x = d3.scaleBand()
-      .domain(sessionData.map(d => d.start))
-      .range([margin.left, width - margin.right])
+    // Select or create the SVG element
+    const svg = d3.select(svgRef.current)
+      .attr('width', width + margin.left + margin.right)
+      .attr('height', height + margin.top + margin.bottom)
+      .append('g')
+      .attr('transform', `translate(${margin.left},${margin.top})`);
+
+    // Add your D3 heatmap code here
+    // Sample implementation for demonstration:
+    // Set up scales and axes
+    const xScale = d3.scaleBand()
+      .range([0, width])
       .padding(0.1);
 
-    const y = d3.scaleBand()
-      .domain(sessionData.map(d => d.speaker))
-      .range([margin.top, height - margin.bottom])
+    const yScale = d3.scaleBand()
+      .range([height, 0])
       .padding(0.1);
 
-    const color = d3.scaleLinear()
-      .range(["white", "blue"]) // Example color range
-      .domain([0, 1]); // Example domain
+    const colorScale = d3.scaleSequential()
+      .interpolator(d3.interpolateViridis)
+      .domain([0, d3.max(sessionData, d => d.value)]);
 
-    svg.selectAll("rect")
+    // Update scales' domains based on data
+    xScale.domain(sessionData.map(d => d.x));
+    yScale.domain(sessionData.map(d => d.y));
+
+    // Append the rectangles for the heatmap
+    svg.selectAll('.heatmap-rect')
       .data(sessionData)
-      .join("rect")
-      .attr("x", d => x(d.start))
-      .attr("y", d => y(d.speaker))
-      .attr("width", x.bandwidth())
-      .attr("height", y.bandwidth())
-      .attr("fill", d => color(d.isSilence ? 0 : 1)) // Handle undefined isSilence
-      .on("mouseover", (event, d) => {
-        console.log(`Mouseover on ${d.text}`);
+      .enter()
+      .append('rect')
+      .attr('class', 'heatmap-rect')
+      .attr('x', d => xScale(d.x))
+      .attr('y', d => yScale(d.y))
+      .attr('width', xScale.bandwidth())
+      .attr('height', yScale.bandwidth())
+      .style('fill', d => colorScale(d.value))
+      .on('mouseover', (event, d) => {
+        // Handle mouseover event
+        console.log('Mouseover data:', d);
+        // Show tooltip
+        d3.select('#tooltip')
+          .style('left', `${event.pageX}px`)
+          .style('top', `${event.pageY}px`)
+          .style('display', 'inline-block')
+          .html(`Value: ${d.value}`);
       })
-      .on("mouseout", () => {
-        console.log("Mouseout");
+      .on('mouseout', () => {
+        // Handle mouseout event
+        // Hide tooltip
+        d3.select('#tooltip')
+          .style('display', 'none');
       });
 
-    return () => {
-      svg.selectAll("rect").remove();
-    };
+    // Create tooltip element
+    d3.select('body').append('div')
+      .attr('id', 'tooltip')
+      .attr('class', 'heatmap-tooltip')
+      .style('position', 'absolute')
+      .style('padding', '8px')
+      .style('background', 'rgba(0,0,0,0.7)')
+      .style('color', '#fff')
+      .style('border-radius', '4px')
+      .style('pointer-events', 'none')
+      .style('display', 'none');
 
   }, [sessionData]);
 
   return (
     <HeatmapContainer>
-      <HeatmapSvg ref={svgRef} width={500} height={300}>
-        {/* SVG content */}
-      </HeatmapSvg>
+      <HeatmapSvg ref={svgRef} />
     </HeatmapContainer>
   );
 };
 
 HeatmapD3.propTypes = {
-  sessionData: PropTypes.arrayOf(
-    PropTypes.shape({
-      speaker: PropTypes.string.isRequired,
-      isSilence: PropTypes.bool, // Make isSilence optional
-      text: PropTypes.string.isRequired,
-      start: PropTypes.number.isRequired,
-      end: PropTypes.number.isRequired,
-      wordFrequency: PropTypes.number,
-      confidence: PropTypes.number,
-    })
-  ).isRequired,
+  sessionData: PropTypes.array.isRequired,
 };
 
 export default HeatmapD3;

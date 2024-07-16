@@ -1,5 +1,8 @@
+// fetchData: Asynchronously fetches data from a given URL and returns the parsed JSON.
+
 // src/utils/fetchData.js
 
+// Function to fetch JSON data
 export async function fetchData() {
     try {
       const response = await fetch('/data/fileList.json');
