@@ -5,6 +5,8 @@ import PropTypes from 'prop-types';
 import './HeatmapComponent.css';  // Importing CSS specific to HeatmapComponent
 
 const HeatmapCell = ({ x, y, width, height, color, onHover, onClick }) => {
+  console.log("Props passed to HeatmapCell:", { x, y, width, height, color });
+
   return (
     <rect
       x={x}                    // x-coordinate of the cell

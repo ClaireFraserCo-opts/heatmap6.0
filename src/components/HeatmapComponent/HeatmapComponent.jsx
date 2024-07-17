@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import HeatmapCell from "./HeatmapCell";
 import HeatmapTooltip from "./HeatmapTooltip";
-import { fetchData } from "../../utils/fetchData";
-import { processSessionData, calculateWordFrequencies } from "../../utils/processData";
+import { processSessionData } from "../../utils/processData";
 import "./HeatmapComponent.css";
 
 const HeatmapComponent = ({ initialHeatmapData }) => {
@@ -55,13 +54,14 @@ const HeatmapComponent = ({ initialHeatmapData }) => {
       const data = await response.json();
       if (data.utterances && data.words) {
         const combinedData = processSessionData(data);
+        console.log("Combined Data:", combinedData); // Log the processed data
         setSessionData(combinedData);
         updateHeatmapData(combinedData);
         if (combinedData.length > 0) {
-          setTooltipData(combinedData[0]); // Example: Set first session data as tooltip data
-          setTooltipPosition({ x: 0, y: 0 }); // Example: Set default position
+          setTooltipData(combinedData[0]);
+          setTooltipPosition({ x: 0, y: 0 });
         } else {
-          setTooltipData(null); // No session data available, clear tooltip
+          setTooltipData(null);
         }
       } else {
         console.log(`No session data fetched from ${fileName} or empty array.`);
@@ -79,20 +79,15 @@ const HeatmapComponent = ({ initialHeatmapData }) => {
   };
 
   const updateHeatmapData = (sessionData) => {
-    // Implement logic to update heatmapData based on sessionData
     const updatedHeatmapData = sessionData.map((data, index) => ({
       x: data.x || 0,
       y: data.y || 0,
-      width: data.width || 12, // Default width
-      height: data.height || 12, // Default height
-      color: getColorForData(data), // Assuming getColorForData is defined elsewhere
+      width: data.width || 12,
+      height: data.height || 12,
+      color: data.color || "blue",
     }));
+    console.log("Updated Heatmap Data:", updatedHeatmapData); // Log updatedHeatmapData for debugging
     setHeatmapData(updatedHeatmapData);
-  };
-
-  const getColorForData = (data) => {
-    // Implement logic to determine color based on data
-    return "blue"; // Example color, replace with actual logic
   };
 
   const handleCellHover = (event, cellData) => {
@@ -102,7 +97,6 @@ const HeatmapComponent = ({ initialHeatmapData }) => {
 
   const handleCellClick = (cellData) => {
     console.log("Clicked cell data:", cellData);
-    // Handle click event as needed
   };
 
   return (
@@ -123,7 +117,7 @@ const HeatmapComponent = ({ initialHeatmapData }) => {
       {isLoading ? (
         <p>Loading...</p>
       ) : (
-        <svg width="800" height="600">
+        <svg width="100%" height="100%">
           {heatmapData &&
             heatmapData.map((cellData, index) => (
               <HeatmapCell

@@ -1,7 +1,5 @@
 // this function merges data from multiple files into a single dataset (mergedData) and processes each session to extract relevant information such as speaker, text, start time, and end time.
 
-// src/utils/processData.js
-
 // Function to process session data
 export const processSessionData = (files) => {
   // Ensure `files` is an object with `utterances` and `words` arrays
@@ -13,19 +11,41 @@ export const processSessionData = (files) => {
   // Extract utterances from the files object
   const utterances = files.utterances;
 
-  // Logic to process the session data
-  const processedData = utterances.map(session => ({
-    speaker: session.speaker,
-    text: session.text,
-    startTime: Math.round(session.start),
-    endTime: Math.round(session.end),
-    // Additional processing as needed
-  }));
+  // Determine the number of columns for the grid
+  const numColumns = 10; // Adjust this value as needed
 
+  // Logic to process the session data
+  const processedData = utterances.flatMap((session, sessionIndex) => 
+     session.words.map((word, wordIndex) => {
+      const cellIndex = sessionIndex * session.word.length + wordIndex;
+      return {
+      x: sessionIndex * 20, // Example logic for x-coordinate
+      y: wordIndex * 20, // Example logic for y-coordinate
+      width: 12,
+      height: 12,
+      color: getColorForData(word), // Function to determine the color
+      text: word.text, // Add additional properties as needed
+      speaker: session.speaker,
+      startTime: Math.round(session.start),
+      endTime: Math.round(session.end),
+    };
+})
+);
+
+  // Flatten the array of arrays
   return processedData;
 };
 
-
+// Function to determine color based on word properties
+const getColorForData = (word) => {
+  if (word.text.length > 5) {
+    return "red";
+  } else if (word.text.length > 3) {
+    return "blue";
+  } else {
+    return "green";
+  }
+};
 
 
 // this function calculates the frequency of each word in the provided data (data), removes punctuation, and returns the top 25 most frequent words.
@@ -55,4 +75,3 @@ export const calculateWordFrequencies = (data) => {
   const sortedWords = Object.entries(wordFreq).sort((a, b) => b[1] - a[1]);
   return sortedWords.slice(0, 25);
 };
-
