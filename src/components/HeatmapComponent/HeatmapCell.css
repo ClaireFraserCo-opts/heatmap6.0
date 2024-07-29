@@ -1,0 +1,11 @@
+/* src/components/Heatmap/HeatmapCell.css */
+.heatmap-cell {
+    stroke: #fff;
+    stroke-width: 0.5;
+    cursor: pointer;
+  }
+  
+  .heatmap-cell:hover {
+    opacity: 0.7;
+  }
+  
