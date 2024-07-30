@@ -1,20 +1,40 @@
-// getColorScale: Returns a color scale with predefined domain and range.
-// getShadedColor: Adjusts the brightness of the base color based on intensity.
-
 // src/utils/colorUtils.js
-
 import * as d3 from 'd3';
 
-// Function to get the base color scale
-export const getColorScale = () => {
-  return d3.scaleOrdinal()
-    .domain(['silence', 'A', 'B'])
-    .range(['gray', 'blue', 'green']);
+// Define color scales for each speaker
+export const colorShades = {
+  speakerColors: {
+    A: d3.scaleLinear().domain([0, 100]).range(["#fde0dd", "#c51b8a"]), // Light to dark pink
+    B: d3.scaleLinear().domain([0, 100]).range(["#d4e157", "#33691e"]), // Light to dark green
+    C: d3.scaleLinear().domain([0, 100]).range(["#add8e6", "#00008b"]), // Light to dark blue
+    D: d3.scaleLinear().domain([0, 100]).range(["#f5deb3", "#8b4513"]), // Light to dark brown
+  },
+  silenceColor: "#808080", // Grey
+  overlapColor: "#d50000", // Cardinal red
+  unknownSpeakerColor: "#b0b0b0", // Neutral grey for unknown speakers
 };
 
-// Function to get shaded color based on intensity
-export const getShadedColor = (baseColor, intensity) => {
-  // Implement logic to return a color based on intensity (0-5)
-  // Example: use d3 color manipulation methods to adjust the base color's brightness
-  return d3.color(baseColor).brighter(intensity / 5).toString();
+// Function to get color based on percentile
+export const getColorForPercentile = (percentile) => {
+  if (percentile === null) return 'lightgray'; // Default color for silence
+  const colorScale = d3.scaleSequential(d3.interpolateViridis).domain([0, 100]);
+  return colorScale(percentile);
+};
+
+// Function to determine color for an utterance
+export const getColorForUtterance = (utterance) => {
+  if (!utterance) return "#FFFFFF"; // Default color
+
+  if (utterance.isOverlap) return colorShades.overlapColor; // Overlap color
+  if (utterance.isSilence) return colorShades.silenceColor; // Silence color
+
+  // Get color for speaker if defined
+  const { speaker, percentile } = utterance;
+  if (speaker && colorShades.speakerColors[speaker]) {
+    const colorScale = colorShades.speakerColors[speaker];
+    const normalizedPercentile = Math.max(0, Math.min(100, percentile || 100)); // Ensure percentile is within domain
+    return colorScale(normalizedPercentile);
+  }
+
+  return colorShades.unknownSpeakerColor; // Default color for unknown speakers
 };

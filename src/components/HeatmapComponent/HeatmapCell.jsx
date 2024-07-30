@@ -2,6 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import { getColorForUtterance } from '../../utils/colorUtils'; // Ensure this path is correct
+import './HeatmapCell.css'; // Import CSS for HeatmapCell component
 
 const HeatmapCell = ({
   speaker,
@@ -9,26 +11,21 @@ const HeatmapCell = ({
   text,
   start,
   end,
-  wordFrequency = 0,
-  confidence = 0,
+  percentile,
   onMouseEnter = () => {},
   onMouseLeave = () => {},
   onClick = () => {},
 }) => {
-  const getColor = () => {
-    if (isSilence) return 'gray';
-    switch (speaker) {
-      case 'A':
-        return 'blue';
-      case 'B':
-        return 'green';
-      default:
-        return 'white';
-    }
-  };
+  // Debug log to check percentile
+  console.log('Cell Percentile:', percentile);
 
-  const handleMouseEnter = () => {
-    onMouseEnter({ text, start, end, wordFrequency, confidence });
+  const utterance = { speaker, isSilence, text, start, end, percentile: percentile !== undefined ? percentile : 0 };
+
+  // Use the imported function to get color based on utterance
+  const cellColor = getColorForUtterance(utterance);
+
+  const handleMouseEnter = (event) => {
+    onMouseEnter(utterance, event);
   };
 
   const handleMouseLeave = () => {
@@ -36,45 +33,46 @@ const HeatmapCell = ({
   };
 
   const handleClick = () => {
-    onClick({ text, start, end, wordFrequency, confidence });
+    onClick(utterance);
   };
 
   return (
     <Tooltip
-    title={
-      <React.Fragment>
-        <Typography variant="body2"><strong>Text:</strong> {text}</Typography>
-        <Typography variant="body2"><strong>Start:</strong> {start}ms</Typography>
-        <Typography variant="body2"><strong>End:</strong> {end}ms</Typography>
-        <Typography variant="body2"><strong>Word Frequency:</strong> {wordFrequency}</Typography>
-        <Typography variant="body2"><strong>Confidence:</strong> {confidence}</Typography>
-      </React.Fragment>
-    }
-    enterDelay={500} // Optional: Adjust tooltip delay
-    arrow
-  >
-
-    <div
-      className="heatmap-cell"
-      style={{ backgroundColor: getColor() }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
+      title={
+        <React.Fragment>
+          <Typography variant="body2"><strong>Text:</strong> {text}</Typography>
+          <Typography variant="body2"><strong>Start:</strong> {start}ms</Typography>
+          <Typography variant="body2"><strong>End:</strong> {end}ms</Typography>
+          <Typography variant="body2"><strong>Percentile:</strong> {percentile}</Typography>
+        </React.Fragment>
+      }
+      enterDelay={500}
+      arrow
     >
-      {/* Optional: Add content or leave empty for visual representation */}
-    </div>
+      <div
+        className="heatmap-cell"
+        style={{
+          backgroundColor: cellColor,
+          // Remove width, height, and border here if set in CSS
+        }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
+      >
+        {/* Optional: Add content or leave empty for visual representation */}
+      </div>
     </Tooltip>
   );
 };
 
 HeatmapCell.propTypes = {
   isSilence: PropTypes.bool.isRequired,
-  speaker: PropTypes.string.isRequired,
-  text: PropTypes.string.isRequired,
-  start: PropTypes.number.isRequired,
-  end: PropTypes.number.isRequired,
-  wordFrequency: PropTypes.number,
-  confidence: PropTypes.number,
+  speaker: PropTypes.string,
+  text: PropTypes.string,
+  start: PropTypes.number,
+  end: PropTypes.number,
+  percentile: PropTypes.number,
+  isOverlap: PropTypes.bool,
   onMouseEnter: PropTypes.func,
   onMouseLeave: PropTypes.func,
   onClick: PropTypes.func,

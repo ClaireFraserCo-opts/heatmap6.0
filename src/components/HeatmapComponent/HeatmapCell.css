@@ -1,11 +1,15 @@
-/* src/components/Heatmap/HeatmapCell.css */
+/* Style for each individual heatmap cell */
 .heatmap-cell {
-    stroke: #fff;
-    stroke-width: 0.5;
-    cursor: pointer;
-  }
-  
-  .heatmap-cell:hover {
-    opacity: 0.7;
-  }
-  
+  box-sizing: border-box;
+  width: 25px; /* Adjust width as needed */
+  height: 25px; /* Adjust height as needed */
+  background-color: #ffffff; /* Default background color */
+  border: 1px solid #d3d3d3; /* Thin light gray border */
+  display: inline-block;
+  vertical-align: top; /* Ensure cells align properly */
+}
+
+/* Optional: Add hover effect */
+.heatmap-cell:hover {
+  opacity: 0.7; /* Adjust opacity on hover */
+}

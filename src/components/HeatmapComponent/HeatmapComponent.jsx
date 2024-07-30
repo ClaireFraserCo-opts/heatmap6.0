@@ -1,41 +1,36 @@
+// src/HeatmapComponent.jsx
 import React, { useEffect, useState } from 'react';
 import HeatmapCell from './HeatmapCell';
 import HeatmapTooltip from './HeatmapTooltip';
 import './HeatmapComponent.css';
+import { fetchData } from '../../utils/fetchData';
+import { processSessionData } from '../../utils/processData';
 
 const HeatmapComponent = () => {
-  const [sessionData, setSessionData] = useState([]); // State to store session data
-  const [selectedFile, setSelectedFile] = useState(''); // State to store selected file
-  const [fileList, setFileList] = useState([]); // State to store list of files
-  const [isLoading, setIsLoading] = useState(false); // State to manage loading state
-  const [tooltipContent, setTooltipContent] = useState(null); // State to manage tooltip content
-  const [mouseX, setMouseX] = useState(0); // State to store mouse X coordinate
-  const [mouseY, setMouseY] = useState(0); // State to store mouse Y coordinate
+  const [sessionData, setSessionData] = useState([]);
+  const [selectedFile, setSelectedFile] = useState('');
+  const [fileList, setFileList] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [tooltipContent, setTooltipContent] = useState(null);
+  const [mouseX, setMouseX] = useState(0);
+  const [mouseY, setMouseY] = useState(0);
 
   useEffect(() => {
-    fetchFileList(); // Fetch file list on component mount
+    fetchFileList();
   }, []);
 
   useEffect(() => {
     if (selectedFile) {
-      fetchSessionData(selectedFile); // Fetch session data when selected file changes
+      fetchSessionData(selectedFile);
     }
   }, [selectedFile]);
 
-  // Fetch file list from server
   const fetchFileList = async () => {
+    setIsLoading(true);
     try {
-      const response = await fetch('/data/fileList.json');
-      if (!response.ok) {
-        throw new Error('Failed to fetch file list');
-      }
-      const data = await response.json();
-
-      // Exclude 'fileList.json' from the list of files
-      const filteredFileList = data.filter(fileName => fileName !== 'fileList.json');
+      const data = await fetchData();
+      const filteredFileList = data.map(file => file.fileName).filter(file => file !== 'fileList.json');
       setFileList(filteredFileList);
-
-      // Set default selected file if files are available
       if (filteredFileList.length > 0) {
         setSelectedFile(filteredFileList[0]);
       } else {
@@ -43,23 +38,19 @@ const HeatmapComponent = () => {
       }
     } catch (error) {
       console.error('Error fetching file list:', error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Fetch session data for the selected file
   const fetchSessionData = async (fileName) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/data/${fileName}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${fileName}: ${response.status} ${response.statusText}`);
-      }
-      const data = await response.json();
-
-      // Process fetched data into combined session data
-      if (data.utterances && data.words) {
-        const combinedData = processSessionData(data);
-        setSessionData(combinedData);
+      const data = await fetchData(); // Fetch all data once
+      const selectedFileData = data.find(file => file.fileName === fileName);
+      if (selectedFileData && selectedFileData.data) {
+        const combinedData = processSessionData([selectedFileData]); // Process selected file data
+        setSessionData(combinedData.utterances);
       } else {
         console.log(`No session data fetched from ${fileName} or empty array.`);
         setSessionData([]);
@@ -70,56 +61,25 @@ const HeatmapComponent = () => {
       setIsLoading(false);
     }
   };
+  
 
-  // Process raw data into combined session data format
-  const processSessionData = (data) => {
-    let combinedData = [];
-    if (data.utterances && data.words) {
-      combinedData = data.utterances.map(utterance => ({
-        speaker: utterance.speaker,
-        text: utterance.text,
-        start: utterance.start,
-        end: utterance.end,
-        wordFrequency: utterance.word_count || 0,
-        confidence: utterance.confidence || 0,
-        isSilence: utterance.isSilence || false
-      })).concat(data.words.map(word => ({
-        speaker: word.speaker,
-        text: word.text,
-        start: word.start,
-        end: word.end,
-        wordFrequency: 1,
-        confidence: word.confidence || 0,
-        isSilence: word.isSilence || false
-      })));
-    } else {
-      console.log('Unexpected data structure or empty array:', data);
-    }
-    return combinedData;
-  };
-
-  // Handle mouse enter event on heatmap cell
   const handleMouseEnter = (cellData, event) => {
-    setTooltipContent(cellData); // Set tooltip content to current cell data
-    setMouseX(event.clientX); // Update mouse X coordinate
-    setMouseY(event.clientY); // Update mouse Y coordinate
+    setTooltipContent(cellData);
+    setMouseX(event.clientX);
+    setMouseY(event.clientY);
   };
 
-  // Handle mouse leave event on heatmap cell
   const handleMouseLeave = () => {
-    setTooltipContent(null); // Clear tooltip content on mouse leave
+    setTooltipContent(null);
   };
 
-  // Handle click event on heatmap cell
   const handleClick = (cellData) => {
-    console.log(cellData); // Log cell data to console on click (optional)
-    // Handle click interactions if needed
+    console.log(cellData);
   };
 
-  // Handle file change event in dropdown
   const handleFileChange = (event) => {
     const selectedFileName = event.target.value;
-    setSelectedFile(selectedFileName); // Update selected file state
+    setSelectedFile(selectedFileName);
   };
 
   return (
@@ -135,28 +95,31 @@ const HeatmapComponent = () => {
       </div>
 
       <div className="heatmap">
-        {isLoading ? ( // Render loading message if data is loading
+        {isLoading ? (
           <p>Loading...</p>
         ) : (
           <div className="heatmap-grid">
-            {sessionData.map((cell, index) => (
-              <HeatmapCell
-                key={index}
-                speaker={cell.speaker}
-                isSilence={cell.isSilence}
-                text={cell.text}
-                start={cell.start}
-                end={cell.end}
-                wordFrequency={cell.wordFrequency}
-                confidence={cell.confidence}
-                onMouseEnter={(event) => handleMouseEnter(cell, event)} // Pass current cell data and event to mouse enter handler
-                onMouseLeave={handleMouseLeave} // Attach mouse leave handler
-                onClick={() => handleClick(cell)} // Attach click handler
-              />
-            ))}
+            {Array.isArray(sessionData) && sessionData.length > 0 ? (
+              sessionData.map((cell, index) => (
+                <HeatmapCell
+                  key={index}
+                  speaker={cell.speaker}
+                  isSilence={cell.isSilence}
+                  text={cell.text}
+                  start={cell.start}
+                  end={cell.end}
+                  percentile={cell.percentile}
+                  onMouseEnter={(event) => handleMouseEnter(cell, event)}
+                  onMouseLeave={handleMouseLeave}
+                  onClick={() => handleClick(cell)}
+                />
+              ))
+            ) : (
+              <p>No session data available.</p>
+            )}
           </div>
         )}
-        {tooltipContent && ( // Render tooltip if tooltip content is available
+        {tooltipContent && (
           <HeatmapTooltip content={tooltipContent} mouseX={mouseX} mouseY={mouseY} />
         )}
       </div>

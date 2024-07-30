@@ -1,38 +1,28 @@
-/* src/components/HeatmapComponent/HeatmapComponent.css */
-
 /* Ensure the heatmap container is properly styled */
 .heatmap-container {
   position: relative; /* Ensure proper positioning */
-  width: 100%; /* Adjust as needed */
-  height: 100%; /* Adjust as needed */
+  width: 545px; /* Fixed width of the container */
+  height: 810px; /* Fixed height of the container */
+  overflow: hidden; /* Hide overflow to keep the grid contained */
 }
 
 /* Grid styling for the heatmap */
 .heatmap-grid {
   display: grid; /* Use CSS grid for better control */
-  grid-template-columns: repeat(auto-fill, minmax(10px, 1fr)); /* Adjust based on your requirements */
-  gap: 1px; /* Adjust gap between cells as needed */
-  width: 545px; /* Fixed width of the heatmap grid */
-  height: 810px; /* Fixed height of the heatmap grid */
-  border: 1px solid #ccc; /* Optional: Add a border around the grid */
-  overflow: auto; /* Ensure overflow behavior is as expected */
+  grid-template-columns: repeat(auto-fit, minmax(20px, 1fr)); /* Adjust column width */
+  grid-template-rows: repeat(auto-fit, minmax(20px, 1fr)); /* Adjust row height */
+  gap: 0; /* Remove gap between cells */
+  width: 100%; /* Full width of the container */
+  height: 100%; /* Full height of the container */
+  border: 1px solid #ccc; /* Optional border around the grid */
+  overflow: auto; /* Handle overflow if needed */
 }
 
 /* Style for each individual heatmap cell */
 .heatmap-cell {
   box-sizing: border-box;
-  height: 40px; /* Height of each heatmap cell */
+  width: 20px; /* Adjust width as needed */
+  height: 20px; /* Adjust height as needed */
   background-color: #ffffff; /* Default background color */
-  /*width: calc(100% / 10);  Adjust cell width based on number of cells per row */
-}
-
-/* Tooltip styling */
-.heatmap-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  border: 1px solid #d3d3d3; /* Thin light gray border for spacing */
 }
