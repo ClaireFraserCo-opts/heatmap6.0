@@ -161,7 +161,7 @@ const HeatmapComponent = () => {
       .attr("width", cellWidth)
       .attr("height", cellHeight)
       .attr("fill", (d) => getColorForUtterance(d))
-      .attr("stroke", d3.color("#d3d3d3").darker(0.9)) // Grid lines between cells
+      .attr("stroke", d3.color("#d3d3d3").darker(0)) // Grid lines between cells
       .style("box-sizing", "border-box")
       .on("mouseover", (event, d) => handleMouseEnter(d, event))
       .on("mouseout", () => handleMouseLeave())
