@@ -1,11 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import * as d3 from 'd3';
 import HeatmapTooltip from './HeatmapTooltip';
 import './HeatmapComponent.css';
 import { fetchData } from '../../utils/fetchData';
 import { processSessionData } from '../../utils/processData';
-import { Grid } from 'react-virtualized';
-import 'react-virtualized/styles.css'; // Import default styles
-import { getColorForUtterance } from '../../utils/colorUtils'; // Make sure to import this
+import { getColorForUtterance } from '../../utils/colorUtils';
+import styled from 'styled-components';
+
+const HeatmapContainer = styled.div`
+  position: relative;
+  width: 100vw; /* Full viewport width */
+  height: 100vh; /* Full viewport height */
+  padding: 20px; /* Adjust padding if needed */
+  box-sizing: border-box;
+`;
+
+const HeatmapSvg = styled.svg`
+  width: 100%; /* Full width of the container */
+  height: 100%; /* Full height of the container */
+`;
 
 const HeatmapComponent = () => {
   const [sessionData, setSessionData] = useState([]);
@@ -15,9 +28,12 @@ const HeatmapComponent = () => {
   const [tooltipContent, setTooltipContent] = useState(null);
   const [mouseX, setMouseX] = useState(0);
   const [mouseY, setMouseY] = useState(0);
+  const svgRef = useRef(null);
 
   useEffect(() => {
     fetchFileList();
+    window.addEventListener('resize', calculateCellSize);
+    return () => window.removeEventListener('resize', calculateCellSize);
   }, []);
 
   useEffect(() => {
@@ -34,8 +50,6 @@ const HeatmapComponent = () => {
       setFileList(filteredFileList);
       if (filteredFileList.length > 0) {
         setSelectedFile(filteredFileList[0]);
-      } else {
-        console.log('No files available.');
       }
     } catch (error) {
       console.error('Error fetching file list:', error.message);
@@ -63,6 +77,30 @@ const HeatmapComponent = () => {
     }
   };
 
+  const calculateCellSize = () => {
+    const svg = svgRef.current;
+    const width = svg.clientWidth;
+    const height = svg.clientHeight;
+
+    const numColumns = 27;
+    const numRows = Math.ceil(sessionData.length / numColumns);
+
+    const cellWidth = Math.floor(width / numColumns);
+    const cellHeight = Math.floor(height / numRows);
+
+    // Update cell sizes and SVG dimensions
+    svg.setAttribute('width', width);
+    svg.setAttribute('height', height);
+
+    renderHeatmap(cellWidth, cellHeight);
+  };
+
+  useEffect(() => {
+    if (svgRef.current) {
+      calculateCellSize();
+    }
+  }, [sessionData]);
+
   const handleMouseEnter = (cellData, event) => {
     setTooltipContent(cellData);
     setMouseX(event.clientX);
@@ -82,29 +120,54 @@ const HeatmapComponent = () => {
     setSelectedFile(selectedFileName);
   };
 
-  const cellRenderer = ({ columnIndex, key, rowIndex, style }) => {
-    const cellIndex = rowIndex * 27 + columnIndex; // Adjust based on your grid dimensions
-    const cell = sessionData[cellIndex];
-    const backgroundColor = cell ? getColorForUtterance(cell) : '#FFFFFF';
-    const durationInSeconds = cell ? cell.end - cell.start : 1;
-    const cellWidth = durationInSeconds * 20; // Assuming 20px per second
+  const renderHeatmap = (cellWidth, cellHeight) => {
+    const svg = d3.select(svgRef.current);
+    const width = svgRef.current.clientWidth;
+    const height = svgRef.current.clientHeight;
 
-    return (
-      <div
-        key={key}
-        style={{ ...style, backgroundColor, width: cellWidth }}
-        className="heatmap-cell"
-        onMouseEnter={(event) => handleMouseEnter(cell, event)}
-        onMouseLeave={handleMouseLeave}
-        onClick={() => handleClick(cell)}
-      >
-        {/* Optionally render text or other content here */}
-      </div>
-    );
+    // Clear previous content
+    svg.selectAll('*').remove();
+
+    const numColumns = 27;
+    const numRows = Math.ceil(sessionData.length / numColumns);
+
+    const xScale = d3.scaleBand()
+      .domain(d3.range(numColumns))
+      .range([0, width])
+      .padding(0);
+
+    const yScale = d3.scaleBand()
+      .domain(d3.range(numRows))
+      .range([0, height])
+      .padding(0);
+
+    // Add cells
+    svg.selectAll('rect')
+      .data(sessionData)
+      .enter()
+      .append('rect')
+      .attr('x', (d, i) => xScale(i % numColumns))
+      .attr('y', (d, i) => yScale(Math.floor(i / numColumns)))
+      .attr('width', cellWidth)
+      .attr('height', cellHeight)
+      .attr('fill', d => {
+        const color = getColorForUtterance(d);
+        console.log('Cell Color:', color); // Debugging
+        return color;
+      })
+      .on('mouseover', (event, d) => {
+        handleMouseEnter(d, event);
+      })
+      .on('mouseout', () => {
+        handleMouseLeave();
+      })
+      .on('click', (event, d) => {
+        handleClick(d);
+      });
   };
 
   return (
-    <div className="heatmap-container">
+    <HeatmapContainer>
       <div className="file-dropdown">
         <select value={selectedFile || ''} onChange={handleFileChange}>
           {fileList.map((fileName) => (
@@ -115,25 +178,16 @@ const HeatmapComponent = () => {
         </select>
       </div>
 
-      <div className="heatmap">
-        {isLoading ? (
-          <p>Loading...</p>
-        ) : (
-          <Grid
-            cellRenderer={cellRenderer}
-            columnCount={27} // Adjust based on your grid dimensions
-            columnWidth={20}
-            height={810}
-            rowCount={Math.ceil(sessionData.length / 27)} // Adjust based on your grid dimensions
-            rowHeight={20}
-            width={545}
-          />
-        )}
-        {tooltipContent && (
-          <HeatmapTooltip content={tooltipContent} mouseX={mouseX} mouseY={mouseY} />
-        )}
-      </div>
-    </div>
+      <HeatmapSvg ref={svgRef}>
+        {/* SVG content */}
+      </HeatmapSvg>
+
+      {isLoading && <p>Loading...</p>}
+
+      {tooltipContent && (
+        <HeatmapTooltip content={tooltipContent} mouseX={mouseX} mouseY={mouseY} />
+      )}
+    </HeatmapContainer>
   );
 };
 
