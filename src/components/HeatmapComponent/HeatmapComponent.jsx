@@ -1,10 +1,11 @@
-// src/HeatmapComponent.jsx
 import React, { useEffect, useState } from 'react';
-import HeatmapCell from './HeatmapCell';
 import HeatmapTooltip from './HeatmapTooltip';
 import './HeatmapComponent.css';
 import { fetchData } from '../../utils/fetchData';
 import { processSessionData } from '../../utils/processData';
+import { Grid } from 'react-virtualized';
+import 'react-virtualized/styles.css'; // Import default styles
+import { getColorForUtterance } from '../../utils/colorUtils'; // Make sure to import this
 
 const HeatmapComponent = () => {
   const [sessionData, setSessionData] = useState([]);
@@ -46,10 +47,10 @@ const HeatmapComponent = () => {
   const fetchSessionData = async (fileName) => {
     setIsLoading(true);
     try {
-      const data = await fetchData(); // Fetch all data once
+      const data = await fetchData();
       const selectedFileData = data.find(file => file.fileName === fileName);
       if (selectedFileData && selectedFileData.data) {
-        const combinedData = processSessionData([selectedFileData]); // Process selected file data
+        const combinedData = processSessionData([selectedFileData]);
         setSessionData(combinedData.utterances);
       } else {
         console.log(`No session data fetched from ${fileName} or empty array.`);
@@ -61,7 +62,6 @@ const HeatmapComponent = () => {
       setIsLoading(false);
     }
   };
-  
 
   const handleMouseEnter = (cellData, event) => {
     setTooltipContent(cellData);
@@ -82,6 +82,27 @@ const HeatmapComponent = () => {
     setSelectedFile(selectedFileName);
   };
 
+  const cellRenderer = ({ columnIndex, key, rowIndex, style }) => {
+    const cellIndex = rowIndex * 27 + columnIndex; // Adjust based on your grid dimensions
+    const cell = sessionData[cellIndex];
+    const backgroundColor = cell ? getColorForUtterance(cell) : '#FFFFFF';
+    const durationInSeconds = cell ? cell.end - cell.start : 1;
+    const cellWidth = durationInSeconds * 20; // Assuming 20px per second
+
+    return (
+      <div
+        key={key}
+        style={{ ...style, backgroundColor, width: cellWidth }}
+        className="heatmap-cell"
+        onMouseEnter={(event) => handleMouseEnter(cell, event)}
+        onMouseLeave={handleMouseLeave}
+        onClick={() => handleClick(cell)}
+      >
+        {/* Optionally render text or other content here */}
+      </div>
+    );
+  };
+
   return (
     <div className="heatmap-container">
       <div className="file-dropdown">
@@ -98,26 +119,15 @@ const HeatmapComponent = () => {
         {isLoading ? (
           <p>Loading...</p>
         ) : (
-          <div className="heatmap-grid">
-            {Array.isArray(sessionData) && sessionData.length > 0 ? (
-              sessionData.map((cell, index) => (
-                <HeatmapCell
-                  key={index}
-                  speaker={cell.speaker}
-                  isSilence={cell.isSilence}
-                  text={cell.text}
-                  start={cell.start}
-                  end={cell.end}
-                  percentile={cell.percentile}
-                  onMouseEnter={(event) => handleMouseEnter(cell, event)}
-                  onMouseLeave={handleMouseLeave}
-                  onClick={() => handleClick(cell)}
-                />
-              ))
-            ) : (
-              <p>No session data available.</p>
-            )}
-          </div>
+          <Grid
+            cellRenderer={cellRenderer}
+            columnCount={27} // Adjust based on your grid dimensions
+            columnWidth={20}
+            height={810}
+            rowCount={Math.ceil(sessionData.length / 27)} // Adjust based on your grid dimensions
+            rowHeight={20}
+            width={545}
+          />
         )}
         {tooltipContent && (
           <HeatmapTooltip content={tooltipContent} mouseX={mouseX} mouseY={mouseY} />

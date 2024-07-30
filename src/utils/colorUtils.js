@@ -1,4 +1,3 @@
-// src/utils/colorUtils.js
 import * as d3 from 'd3';
 
 // Define color scales for each speaker

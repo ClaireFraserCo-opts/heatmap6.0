@@ -1,9 +1,10 @@
+// src/components/Heatmap/HeatmapCell.jsx
 import React from 'react';
 import PropTypes from 'prop-types';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { getColorForUtterance } from '../../utils/colorUtils'; // Ensure this path is correct
-import './HeatmapCell.css'; // Import CSS for HeatmapCell component
+import './HeatmapCell.css';
 
 const HeatmapCell = ({
   speaker,
@@ -16,12 +17,7 @@ const HeatmapCell = ({
   onMouseLeave = () => {},
   onClick = () => {},
 }) => {
-  // Debug log to check percentile
-  console.log('Cell Percentile:', percentile);
-
   const utterance = { speaker, isSilence, text, start, end, percentile: percentile !== undefined ? percentile : 0 };
-
-  // Use the imported function to get color based on utterance
   const cellColor = getColorForUtterance(utterance);
 
   const handleMouseEnter = (event) => {
@@ -53,13 +49,15 @@ const HeatmapCell = ({
         className="heatmap-cell"
         style={{
           backgroundColor: cellColor,
-          // Remove width, height, and border here if set in CSS
+          width: '20px',
+          height: '20px',
+          display: 'inline-block',
+          border: '1px solid #d3d3d3',
         }}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
       >
-        {/* Optional: Add content or leave empty for visual representation */}
       </div>
     </Tooltip>
   );

@@ -13,46 +13,49 @@ export const processSessionData = (files) => {
   // Sort utterances by start time
   const sortedUtterances = d3.sort(allUtterances, d => d.start);
 
-  // Calculate silence durations and add to utterances
-  const utterancesWithSilence = [];
+  const intervals = [];
   let lastIndex = 0;
 
   for (let i = 0; i < sortedUtterances.length; i++) {
     const utterance = sortedUtterances[i];
-    const start = Math.round(utterance.start);
+    let start = Math.round(utterance.start);
     const end = Math.round(utterance.end);
 
-    if (start > lastIndex) {
-      // Add silence
-      utterancesWithSilence.push({
+    // Add silence intervals if any
+    while (start > lastIndex) {
+      intervals.push({
         start: lastIndex,
-        end: start,
+        end: lastIndex + 1000,
         isSilence: true,
         percentile: null // No percentile for silence
       });
+      lastIndex += 1000;
     }
 
-    // Add the current utterance
-    utterancesWithSilence.push({
-      ...utterance,
-      start,
-      end,
-      isSilence: false,
-      percentile: utterance.percentile !== undefined ? utterance.percentile : 0 // Ensure percentile is set
-    });
-    
-    lastIndex = end;
+    // Add utterance intervals
+    while (start < end) {
+      intervals.push({
+        start,
+        end: start + 1000 > end ? end : start + 1000,
+        ...utterance,
+        isSilence: false,
+        percentile: utterance.percentile !== undefined ? utterance.percentile : 0
+      });
+      start += 1000;
+      lastIndex = start;
+    }
   }
 
-  // If the last utterance does not end at the session end, add remaining silence
+  // Add remaining silence intervals if any
   const sessionEnd = d3.max(sortedUtterances, d => d.end);
-  if (lastIndex < sessionEnd) {
-    utterancesWithSilence.push({
+  while (lastIndex < sessionEnd) {
+    intervals.push({
       start: lastIndex,
-      end: sessionEnd,
+      end: lastIndex + 1000,
       isSilence: true,
       percentile: null // No percentile for silence
     });
+    lastIndex += 1000;
   }
 
   // Calculate session duration
@@ -60,7 +63,7 @@ export const processSessionData = (files) => {
   const sessionDuration = sessionEnd - sessionStart;
 
   return {
-    utterances: utterancesWithSilence,
+    utterances: intervals,
     sessionDuration
   };
 };
