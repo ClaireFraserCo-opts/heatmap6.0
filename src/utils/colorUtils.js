@@ -43,7 +43,7 @@ export const getColorForUtterance = (utterance) => {
   const { speaker, percentile } = utterance;
   if (speaker && colorShades.speakerColors[speaker]) {
     const colorScale = colorShades.speakerColors[speaker];
-    const normalizedPercentile = Math.max(0, Math.min(100, percentile || 100)); // Ensure percentile is within domain
+    const normalizedPercentile = Math.max(0, Math.min(100, percentile || 0)); // Ensure percentile is within domain
     return colorScale(normalizedPercentile);
   }
 
