@@ -1,0 +1,18 @@
+/* HeatmapD3.css */
+
+.heatmapContainer {
+  position: relative; /* Container for absolute positioning of SVG */
+  width: 100%; /* Ensure it fills its parent */
+  height: 100%; /* Ensure it fills its parent */
+}
+
+.heatmapSvg {
+  position: absolute; /* Positioned relative to the container */
+  top: 0;
+  left: 0;
+  width: 100%; /* Full width of the container */
+  height: 100%; /* Full height of the container */
+  pointer-events: all; /* Enable interaction, change as needed */
+  z-index: 1; /* Ensure it's above other content if necessary */
+}
+

@@ -1,7 +1,7 @@
 // App.js
 
 import React from 'react';
-import './App.css'; // Import your CSS file
+import './components/styles/App.css'; // Import your CSS file
 import HeatmapComponent from './components/HeatmapComponent/HeatmapComponent'; // Import your main component
 
 function App() {

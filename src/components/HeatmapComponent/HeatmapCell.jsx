@@ -1,10 +1,9 @@
-// src/components/Heatmap/HeatmapCell.jsx
 import React from 'react';
 import PropTypes from 'prop-types';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { getColorForUtterance } from '../../utils/colorUtils'; // Ensure this path is correct
-import './HeatmapCell.css';
+import { getColorForUtterance } from '../../utils/colorUtils';
+import '../styles/HeatmapCell.css'; // Ensure minimal or no conflicting styles
 
 const HeatmapCell = ({
   speaker,
@@ -13,6 +12,8 @@ const HeatmapCell = ({
   start,
   end,
   percentile,
+  cellWidth,
+  cellHeight,
   onMouseEnter = () => {},
   onMouseLeave = () => {},
   onClick = () => {},
@@ -36,10 +37,11 @@ const HeatmapCell = ({
     <Tooltip
       title={
         <React.Fragment>
-          <Typography variant="body2"><strong>Text:</strong> {text}</Typography>
-          <Typography variant="body2"><strong>Start:</strong> {start}ms</Typography>
-          <Typography variant="body2"><strong>End:</strong> {end}ms</Typography>
-          <Typography variant="body2"><strong>Percentile:</strong> {percentile}</Typography>
+          <Typography variant="body2"><strong>Speaker:</strong> {speaker || (isSilence ? 'Silence' : 'Unknown')}</Typography>
+          <Typography variant="body2"><strong>Percentile:</strong> {percentile !== undefined ? `${percentile}%` : 'N/A'}</Typography>
+          <Typography variant="body2"><strong>Start:</strong> {start} ms</Typography>
+          <Typography variant="body2"><strong>End:</strong> {end} ms</Typography>
+          <Typography variant="body2"><strong>Text:</strong> {text || (isSilence ? 'No speech' : 'N/A')}</Typography>
         </React.Fragment>
       }
       enterDelay={500}
@@ -48,10 +50,9 @@ const HeatmapCell = ({
       <div
         className="heatmap-cell"
         style={{
-          backgroundColor: cellColor,
-          width: '20px',
-          height: '20px',
-          display: 'inline-block',
+          backgroundColor: cellColor, // Apply dynamic color
+          width: `${cellWidth}px`,     // Apply dynamic width
+          height: `${cellHeight}px`,   // Apply dynamic height
           border: '1px solid #d3d3d3',
         }}
         onMouseEnter={handleMouseEnter}
@@ -70,7 +71,8 @@ HeatmapCell.propTypes = {
   start: PropTypes.number,
   end: PropTypes.number,
   percentile: PropTypes.number,
-  isOverlap: PropTypes.bool,
+  cellWidth: PropTypes.number.isRequired,
+  cellHeight: PropTypes.number.isRequired,
   onMouseEnter: PropTypes.func,
   onMouseLeave: PropTypes.func,
   onClick: PropTypes.func,

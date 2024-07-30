@@ -1,6 +1,11 @@
 // src/utils/processData.js
 import * as d3 from 'd3';
 
+/**
+ * Processes session data to handle utterances and silence intervals.
+ * @param {Array} files - Array of file objects containing utterances.
+ * @returns {Object} - Object containing processed utterances and session duration.
+ */
 export const processSessionData = (files) => {
   const allUtterances = files.flatMap((file) => {
     if (!file.data || !file.data.utterances) {
@@ -36,7 +41,7 @@ export const processSessionData = (files) => {
     while (start < end) {
       intervals.push({
         start,
-        end: start + 1000 > end ? end : start + 1000,
+        end: Math.min(start + 1000, end), 
         ...utterance,
         isSilence: false,
         percentile: utterance.percentile !== undefined ? utterance.percentile : 0

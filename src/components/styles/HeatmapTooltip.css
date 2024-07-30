@@ -1,0 +1,30 @@
+/* src/components/Heatmap/HeatmapTooltip.css */
+.heatmap-tooltip {
+  position: absolute;
+  background-color: rgba(255, 0, 0, 0.7); /* Bright red background for testing */
+  color: #fff;
+  padding: 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 1000;
+  width: 200px;
+  font-size: 12px;
+}
+
+.heatmap-tooltip p {
+  margin: 4px 0;
+  font-size: 14px;
+  opacity: 90;
+  transition: opacity 0.3s ease;
+}
+
+.heatmap-tooltip.show {
+  opacity: 1;
+}
+
+@media (max-width: 600px) {
+  .heatmap-tooltip {
+    width: 150px;
+    font-size: 10px;
+  }
+}

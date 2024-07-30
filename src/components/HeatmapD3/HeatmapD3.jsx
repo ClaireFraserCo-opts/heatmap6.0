@@ -1,24 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
-import PropTypes from 'prop-types';
-import styled from 'styled-components';
-
-
-const HeatmapContainer = styled.div`
-  position: relative;
-  width: 100%; /* Full width of the parent container */
-  height: 100%; /* Full height of the parent container */
-`;
-
-const HeatmapSvg = styled.svg`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: all; /* Enable interaction */
-  z-index: 1;
-`;
+import { getColorForUtterance } from '../../utils/colorUtils';
 
 const HeatmapD3 = ({ sessionData }) => {
   const svgRef = useRef(null);
@@ -46,7 +28,7 @@ const HeatmapD3 = ({ sessionData }) => {
     updateSize(); // Initial call
 
     return () => window.removeEventListener('resize', updateSize);
-  }, [sessionData]);
+  }, [sessionData, cellSize]);
 
   useEffect(() => {
     const svgElement = svgRef.current;
@@ -55,101 +37,71 @@ const HeatmapD3 = ({ sessionData }) => {
     const svg = d3.select(svgElement);
     const { width, height } = svgElement.getBoundingClientRect();
 
-    const margin = { top: 20, right: 20, bottom: 20, left: 20 };
-    const innerWidth = width - margin.left - margin.right;
-    const innerHeight = height - margin.top - margin.bottom;
-
-    const numColumns = Math.floor(innerWidth / cellSize.width);
+    const numColumns = Math.floor(width / cellSize.width);
     const numRows = Math.ceil(sessionData.length / numColumns);
 
-    const x = d3.scaleBand()
+    // Clear existing content
+    svg.selectAll('*').remove();
+
+    // Define scales
+    const xScale = d3.scaleBand()
       .domain(d3.range(numColumns))
-      .range([margin.left, innerWidth + margin.left])
-      .padding(0.1);
+      .range([0, width])
+      .padding(0.1); // Adjust padding for spacing
 
-    const y = d3.scaleBand()
+    const yScale = d3.scaleBand()
       .domain(d3.range(numRows))
-      .range([margin.top, innerHeight + margin.top])
-      .padding(0.1);
+      .range([0, height])
+      .padding(0.1); // Adjust padding for spacing
 
-    const color = d3.scaleLinear()
-      .domain([0, 1])
-      .range(["#ffffff", "#0000ff"]);
+    // Draw grid lines
+    svg.selectAll('.grid-line')
+      .data(xScale.domain())
+      .enter()
+      .append('line')
+      .attr('class', 'grid-line')
+      .attr('x1', d => xScale(d))
+      .attr('x2', d => xScale(d))
+      .attr('y1', 0)
+      .attr('y2', height)
+      .attr('stroke', '#d3d3d3')
+      .attr('stroke-width', 1);
 
-    const zoom = d3.zoom()
-      .scaleExtent([1, 10])
-      .translateExtent([[0, 0], [width, height]])
-      .on('zoom', (event) => {
-        svg.selectAll('rect')
-          .attr('transform', event.transform);
-      });
+    svg.selectAll('.grid-line-horizontal')
+      .data(yScale.domain())
+      .enter()
+      .append('line')
+      .attr('class', 'grid-line-horizontal')
+      .attr('x1', 0)
+      .attr('x2', width)
+      .attr('y1', d => yScale(d))
+      .attr('y2', d => yScale(d))
+      .attr('stroke', '#d3d3d3')
+      .attr('stroke-width', 1);
 
-    svg.call(zoom);
-
+    // Draw heatmap cells
     svg.selectAll('rect')
       .data(sessionData)
-      .join(
-        enter => enter
-          .append('rect')
-          .attr('x', d => x(d.start) || 0)
-          .attr('y', d => y(d.speaker) || 0)
-          .attr('width', x.bandwidth() || 0)
-          .attr('height', y.bandwidth() || 0)
-          .attr('fill', d => color(d.isSilence ? 0 : 1))
-          .on('mouseover', (event, d) => {
-            tooltip.transition().duration(200).style('opacity', .9);
-            tooltip.html(`Details: ${d.text}`)
-              .style('left', (event.pageX + 5) + 'px')
-              .style('top', (event.pageY - 28) + 'px');
-          })
-          .on('mouseout', () => {
-            tooltip.transition().duration(500).style('opacity', 0);
-          }),
-        update => update
-          .attr('x', d => x(d.start) || 0)
-          .attr('y', d => y(d.speaker) || 0)
-          .attr('width', x.bandwidth() || 0)
-          .attr('height', y.bandwidth() || 0)
-          .attr('fill', d => color(d.isSilence ? 0 : 1)),
-        exit => exit.remove()
-      );
+      .enter()
+      .append('rect')
+      .attr('x', (d, i) => xScale(i % numColumns))
+      .attr('y', (d, i) => yScale(Math.floor(i / numColumns)))
+      .attr('width', xScale.bandwidth())
+      .attr('height', yScale.bandwidth())
+      .attr('fill', d => d.isSilence ? '#ccc' : getColorForUtterance(d))
+      .attr('stroke', '#d3d3d3') // Grid lines between cells
+      .attr('stroke-width', 1)
+      .style('box-sizing', 'border-box');
 
-    const tooltip = d3.select('body').append('div')
-      .attr('class', 'tooltip')
-      .style('opacity', 0)
-      .style('position', 'absolute')
-      .style('background-color', '#fff')
-      .style('border', '1px solid #ccc')
-      .style('padding', '5px')
-      .style('border-radius', '3px');
+    // Optional: Add tooltip and interactivity here
 
-    return () => {
-      svg.selectAll('rect').remove();
-      d3.select('.tooltip').remove();
-    };
   }, [sessionData, cellSize]);
 
   return (
-    <HeatmapContainer>
-      <HeatmapSvg ref={svgRef}>
-        {/* SVG content */}
-      </HeatmapSvg>
-    </HeatmapContainer>
+    <svg ref={svgRef} width="100%" height="100%">
+      {/* SVG content */}
+    </svg>
   );
-};
-
-HeatmapD3.propTypes = {
-  sessionData: PropTypes.arrayOf(
-    PropTypes.shape({
-      speaker: PropTypes.string.isRequired,
-      isSilence: PropTypes.bool,
-      text: PropTypes.string.isRequired,
-      start: PropTypes.number.isRequired,
-      end: PropTypes.number.isRequired,
-      wordFrequency: PropTypes.number,
-      confidence: PropTypes.number,
-    })
-  ).isRequired,
 };
 
 export default HeatmapD3;

@@ -1,0 +1,26 @@
+/* Style for each individual heatmap cell */
+.heatmap-cell {
+  box-sizing: border-box;
+  width: 25px; /* Adjust width as needed */
+  height: 25px; /* Adjust height as needed */
+  background-color: #ffffff; /* Default background color; this will be overridden by inline styles or D3 */
+  border: 1px solid #d3d3d3; /* Thin light gray border */
+  display: inline-block;
+  vertical-align: top; /* Ensure cells align properly */
+  cursor: pointer; /* Indicate that the cell is interactive */
+  position: relative; /* Required for positioning tooltip */
+  transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transition for background color and scaling */
+}
+
+/* Hover effect for heatmap cell */
+.heatmap-cell:hover {
+  opacity: 0.8; /* Slightly less opaque on hover */
+  transform: scale(1.05); /* Slightly enlarge cell on hover */
+  background-color: rgba(0, 0, 0, 0.1); /* Light overlay color on hover */
+}
+
+/* Focus effect for accessibility */
+.heatmap-cell:focus {
+  outline: 2px solid #005fcc; /* Outline for focus state */
+  outline-offset: 2px; /* Space between outline and cell */
+}

@@ -1,13 +1,18 @@
 // src/utils/fetchData.js
+/**
+ * Fetches a list of JSON files and their data.
+ * @returns {Promise<Array>} - An array of objects, each containing fileName and data.
+ */
 export async function fetchData() {
   try {
+    // Fetch the list of files
     const response = await fetch('/data/fileList.json');
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`HTTP error! Status: ${response.status}`);
     }
     const fileList = await response.json();
 
-    // Filter out 'fileList.json' itself
+    // Filter out 'fileList.json' itself from the list of files
     const files = fileList.filter(file => file !== 'fileList.json');
 
     console.log('Files to fetch:', files); // Log files being fetched
@@ -17,17 +22,18 @@ export async function fetchData() {
       try {
         const res = await fetch(`/data/${file}`);
         if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
+          throw new Error(`HTTP error! Status: ${res.status}`);
         }
         const jsonData = await res.json();
         console.log(`Fetched data for ${file}:`, jsonData); // Log fetched data
         return { fileName: file, data: jsonData };
       } catch (error) {
         console.error(`Error fetching data for ${file}:`, error.message);
-        return { fileName: file, data: null }; // Handle gracefully or throw as needed
+        return { fileName: file, data: null }; // Handle errors gracefully
       }
     });
 
+    // Wait for all promises to resolve
     const allData = await Promise.all(dataPromises);
     console.log('All fetched data:', allData); // Log all data fetched
     return allData;

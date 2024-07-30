@@ -4,7 +4,7 @@
 // src/components/HeatmapComponent/HeatmapLegend.jsx
 
 import React from 'react';
-import './HeatmapLegend.css'; // Add styling for the legend
+import '../styles/HeatmapLegend.css'; // Add styling for the legend
 
 // Define the legend component
 const HeatmapLegend = () => {

@@ -13,14 +13,26 @@ export const colorShades = {
   unknownSpeakerColor: "#b0b0b0", // Neutral grey for unknown speakers
 };
 
-// Function to get color based on percentile
+/**
+ * Gets the color for a given percentile value.
+ * @param {number} percentile - The percentile value (0 to 100).
+ * @returns {string} - The color corresponding to the percentile.
+ */
 export const getColorForPercentile = (percentile) => {
-  if (percentile === null) return 'lightgray'; // Default color for silence
+  if (percentile === null || isNaN(percentile)) return 'lightgray'; // Default color for silence
   const colorScale = d3.scaleSequential(d3.interpolateViridis).domain([0, 100]);
-  return colorScale(percentile);
+  return colorScale(Math.max(0, Math.min(100, percentile))); // Ensure percentile is within domain
 };
 
-// Function to determine color for an utterance
+/**
+ * Determines the color for an utterance based on its properties.
+ * @param {Object} utterance - The utterance object.
+ * @param {boolean} [utterance.isOverlap] - Indicates if the utterance is an overlap.
+ * @param {boolean} [utterance.isSilence] - Indicates if the utterance is silence.
+ * @param {string} [utterance.speaker] - The speaker identifier.
+ * @param {number} [utterance.percentile] - The percentile for color scaling.
+ * @returns {string} - The color for the utterance.
+ */
 export const getColorForUtterance = (utterance) => {
   if (!utterance) return "#FFFFFF"; // Default color
 
