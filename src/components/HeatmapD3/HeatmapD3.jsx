@@ -1,12 +1,9 @@
-// HeatmapD3.jsx
-
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
-import { fetchData } from '../../utils/fetchData';
-import { processSessionData } from '../../utils/processData';
 import { getColorForUtterance } from '../../utils/colorUtils';
 import '../styles/HeatmapD3.css';
 import HeatmapTooltip from '../HeatmapComponent/HeatmapTooltip';
+import { debounce } from '../../utils/debounce'; // Import custom debounce function
 
 const HeatmapD3 = ({ sessionData }) => {
   const svgRef = useRef(null);
@@ -14,28 +11,30 @@ const HeatmapD3 = ({ sessionData }) => {
   const [tooltipData, setTooltipData] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
+  const minCellSize = 10; // Minimum size in pixels
+
+  // Debounce resize handler
+  const handleResize = debounce(() => {
+    const svgElement = svgRef.current;
+    if (!svgElement) return;
+
+    const width = svgElement.clientWidth;
+    const height = svgElement.clientHeight;
+
+    const numColumns = Math.max(1, Math.floor(width / cellSize.width));
+    const numRows = Math.max(1, Math.ceil(sessionData.length / numColumns));
+
+    setCellSize({
+      width: Math.max(minCellSize, Math.floor(width / numColumns)),
+      height: Math.max(minCellSize, Math.floor(height / numRows)),
+    });
+  }, 200); // Adjust debounce delay as needed
+
   useEffect(() => {
-    const updateSize = () => {
-      const svgElement = svgRef.current;
-      if (!svgElement) return;
+    handleResize(); // Initial call
+    window.addEventListener('resize', handleResize);
 
-      const width = svgElement.clientWidth;
-      const height = svgElement.clientHeight;
-
-      // Dynamically adjust cell size based on container size
-      const numColumns = Math.floor(width / cellSize.width);
-      const numRows = Math.ceil(sessionData.length / numColumns);
-
-      setCellSize({
-        width: Math.floor(width / numColumns),
-        height: Math.floor(height / numRows),
-      });
-    };
-
-    window.addEventListener('resize', updateSize);
-    updateSize(); // Initial call
-
-    return () => window.removeEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [sessionData, cellSize]);
 
   useEffect(() => {
@@ -48,21 +47,18 @@ const HeatmapD3 = ({ sessionData }) => {
     const numColumns = Math.floor(width / cellSize.width);
     const numRows = Math.ceil(sessionData.length / numColumns);
 
-    // Clear existing content
-    svg.selectAll('*').remove();
+    svg.selectAll('*').remove(); // Clear existing content
 
-    // Define scales
     const xScale = d3.scaleBand()
       .domain(d3.range(numColumns))
       .range([0, width])
-      .padding(0.1); // Adjust padding for spacing
+      .padding(0.1);
 
     const yScale = d3.scaleBand()
       .domain(d3.range(numRows))
       .range([0, height])
-      .padding(0.1); // Adjust padding for spacing
+      .padding(0.1);
 
-    // Draw grid lines
     svg.selectAll('.grid-line')
       .data(xScale.domain())
       .enter()
@@ -87,8 +83,7 @@ const HeatmapD3 = ({ sessionData }) => {
       .attr('stroke', '#d3d3d3')
       .attr('stroke-width', 1);
 
-    // Draw heatmap cells
-    const cells = svg.selectAll('rect')
+    svg.selectAll('rect')
       .data(sessionData)
       .enter()
       .append('rect')
@@ -97,7 +92,7 @@ const HeatmapD3 = ({ sessionData }) => {
       .attr('width', xScale.bandwidth())
       .attr('height', yScale.bandwidth())
       .attr('fill', d => d.isSilence ? '#ccc' : getColorForUtterance(d))
-      .attr('stroke', '#d3d3d3') // Grid lines between cells
+      .attr('stroke', '#d3d3d3')
       .attr('stroke-width', 1)
       .style('box-sizing', 'border-box')
       .on('mouseover', (event, d) => {
@@ -111,7 +106,6 @@ const HeatmapD3 = ({ sessionData }) => {
         setTooltipData(null);
       });
 
-    // Draw crosses for cells containing top words
     svg.selectAll('line.cross')
       .data(sessionData.filter(d => d.containsTopWords))
       .enter()

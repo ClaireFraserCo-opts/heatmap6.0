@@ -3,7 +3,9 @@
 .heatmapContainer {
   position: relative; /* Container for absolute positioning of SVG */
   width: 100%; /* Ensure it fills its parent */
-  height: 100%; /* Ensure it fills its parent */
+  height: 100vh; /* Full viewport height or adjust as needed */
+  max-height: 600px; /* Optional: Limit maximum height */
+  overflow: hidden; /* Prevent scrollbars from appearing */
 }
 
 .heatmapSvg {
@@ -12,7 +14,19 @@
   left: 0;
   width: 100%; /* Full width of the container */
   height: 100%; /* Full height of the container */
-  pointer-events: all; /* Enable interaction, change as needed */
+  pointer-events: all; /* Enable interaction, adjust as needed */
   z-index: 1; /* Ensure it's above other content if necessary */
 }
 
+/* Media queries for different screen sizes */
+@media (max-width: 768px) {
+  .heatmapContainer {
+    height: 50vh; /* Adjust height for tablets and smaller screens */
+  }
+}
+
+@media (max-width: 480px) {
+  .heatmapContainer {
+    height: 30vh; /* Further adjust height for mobile devices */
+  }
+}
