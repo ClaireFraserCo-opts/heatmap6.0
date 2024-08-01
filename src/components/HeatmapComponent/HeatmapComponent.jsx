@@ -28,7 +28,7 @@ const HeatmapComponent = () => {
   const [tooltipContent, setTooltipContent] = useState(null);
   const [mouseX, setMouseX] = useState(0);
   const [mouseY, setMouseY] = useState(0);
-  const [cellSize, setCellSize] = useState({ width: 25, height: 25 });
+  const [cellSize, setCellSize] = useState({ width: 25, height: 15 });
   const svgRef = useRef(null);
 
   useEffect(() => {
@@ -68,7 +68,8 @@ const HeatmapComponent = () => {
       const selectedFileData = data.find((file) => file.fileName === fileName);
       if (selectedFileData && selectedFileData.data) {
         const combinedData = processSessionData([selectedFileData]);
-        setSessionData(combinedData.utterances);
+        console.log("Processed session data:", combinedData); // Debug log
+        setSessionData(combinedData.utterances); // Ensure sessionData is an array of utterances
       } else {
         console.log(`No session data fetched from ${fileName} or empty array.`);
         setSessionData([]);
@@ -89,7 +90,7 @@ const HeatmapComponent = () => {
 
     const width = svg.clientWidth;
     const height = svg.clientHeight;
-    const numColumns = 27;
+    const numColumns = Math.floor(width / 25); // Adjust based on your desired cell size
     const numRows = Math.ceil(sessionData.length / numColumns);
 
     const goldenRatio = 1.618;
@@ -100,6 +101,12 @@ const HeatmapComponent = () => {
 
     svg.setAttribute("width", width);
     svg.setAttribute("height", height);
+
+    console.log('Number of utterances:', sessionData.length); // Debug log
+    console.log('Cell Width:', baseCellWidth);
+    console.log('Cell Height:', baseCellHeight);
+    console.log('Num Columns:', numColumns);
+    console.log('Num Rows:', numRows);
 
     renderHeatmap(baseCellWidth, baseCellHeight);
   };
@@ -134,10 +141,16 @@ const HeatmapComponent = () => {
     const width = svgRef.current.clientWidth;
     const height = svgRef.current.clientHeight;
 
+    console.log('SVG Width:', width);
+    console.log('SVG Height:', height);
+
     svg.selectAll("*").remove();
 
-    const numColumns = 27;
+    const numColumns = Math.floor(width / cellWidth);
     const numRows = Math.ceil(sessionData.length / numColumns);
+
+    console.log('Num Columns:', numColumns);
+    console.log('Num Rows:', numRows);
 
     const xScale = d3
       .scaleBand()
@@ -150,6 +163,9 @@ const HeatmapComponent = () => {
       .domain(d3.range(numRows))
       .range([0, height])
       .padding(0);
+
+    console.log('xScale Domain:', xScale.domain());
+    console.log('yScale Domain:', yScale.domain());
 
     svg
       .selectAll("rect")
@@ -180,7 +196,7 @@ const HeatmapComponent = () => {
         </select>
       </div>
 
-      <HeatmapSvg ref={svgRef}>{/* SVG content */}</HeatmapSvg>
+      <HeatmapSvg ref={svgRef} />
 
       {isLoading && <p>Loading...</p>}
 

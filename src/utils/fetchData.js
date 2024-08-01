@@ -1,4 +1,3 @@
-// src/utils/fetchData.js
 /**
  * Fetches a list of JSON files and their data.
  * @returns {Promise<Array>} - An array of objects, each containing fileName and data.

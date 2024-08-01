@@ -1,4 +1,4 @@
-/* src/components/Heatmap/HeatmapTooltip.css */
+/* HeatmapTooltip.css */
 .heatmap-tooltip {
   position: absolute;
   background-color: rgba(255, 0, 0, 0.7); /* Bright red background for testing */
