@@ -6,6 +6,8 @@ import { fetchData } from "../../utils/fetchData";
 import { processSessionData } from "../../utils/processData";
 import { getColorForUtterance } from "../../utils/colorUtils";
 import styled from "styled-components";
+import { debounce } from "lodash";
+import HeatmapCanvas from "./HeatmapCanvas";
 
 const HeatmapContainer = styled.div`
   position: relative;
@@ -13,11 +15,6 @@ const HeatmapContainer = styled.div`
   height: 90vh;
   padding: 20px;
   box-sizing: border-box;
-`;
-
-const HeatmapSvg = styled.svg`
-  width: 100%;
-  height: 100%;
 `;
 
 const HeatmapComponent = () => {
@@ -29,12 +26,12 @@ const HeatmapComponent = () => {
   const [mouseX, setMouseX] = useState(0);
   const [mouseY, setMouseY] = useState(0);
   const [cellSize, setCellSize] = useState({ width: 25, height: 15 });
-  const svgRef = useRef(null);
+  const canvasRef = useRef(null);
 
   useEffect(() => {
     fetchFileList();
-    window.addEventListener("resize", calculateCellSize);
-    return () => window.removeEventListener("resize", calculateCellSize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
@@ -68,52 +65,44 @@ const HeatmapComponent = () => {
       const selectedFileData = data.find((file) => file.fileName === fileName);
       if (selectedFileData && selectedFileData.data) {
         const combinedData = processSessionData([selectedFileData]);
-        console.log("Processed session data:", combinedData); // Debug log
-        setSessionData(combinedData.utterances); // Ensure sessionData is an array of utterances
+        console.log("Processed session data:", combinedData);
+        setSessionData(combinedData.utterances);
       } else {
         console.log(`No session data fetched from ${fileName} or empty array.`);
         setSessionData([]);
       }
     } catch (error) {
-      console.error(
-        `Error fetching session data for ${fileName}:`,
-        error.message
-      );
+      console.error(`Error fetching session data for ${fileName}:`, error.message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const calculateCellSize = () => {
-    const svg = svgRef.current;
-    if (!svg) return;
+  const handleResize = debounce(() => {
+    const canvasElement = canvasRef.current;
+    if (!canvasElement) return;
 
-    const width = svg.clientWidth;
-    const height = svg.clientHeight;
-    const numColumns = Math.floor(width / 25); // Adjust based on your desired cell size
+    const width = canvasElement.clientWidth;
+    const height = canvasElement.clientHeight;
+
+    const numColumns = Math.floor(width / cellSize.width);
     const numRows = Math.ceil(sessionData.length / numColumns);
 
-    const goldenRatio = 1.618;
-    const baseCellWidth = Math.floor(width / numColumns);
-    const baseCellHeight = baseCellWidth / goldenRatio; // Use golden ratio to calculate height
-
-    setCellSize({ width: baseCellWidth, height: baseCellHeight });
-
-    svg.setAttribute("width", width);
-    svg.setAttribute("height", height);
-
-    console.log('Number of utterances:', sessionData.length); // Debug log
-    console.log('Cell Width:', baseCellWidth);
-    console.log('Cell Height:', baseCellHeight);
-    console.log('Num Columns:', numColumns);
-    console.log('Num Rows:', numRows);
-
-    renderHeatmap(baseCellWidth, baseCellHeight);
-  };
+    setCellSize({
+      width: Math.floor(width / numColumns),
+      height: Math.floor(height / numRows),
+    });
+  }, 200);
 
   useEffect(() => {
-    calculateCellSize();
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [sessionData]);
+
+  useEffect(() => {
+    renderHeatmap();
+  }, [sessionData, cellSize]);
 
   const handleMouseEnter = (cellData, event) => {
     setTooltipContent(cellData);
@@ -125,87 +114,67 @@ const HeatmapComponent = () => {
     setTooltipContent(null);
   };
 
-  const handleClick = (cellData) => {
-    console.log(cellData);
-  };
+  const renderHeatmap = () => {
+    if (canvasRef.current) {
+      const context = canvasRef.current.getContext("2d");
+      const numColumns = Math.floor(canvasRef.current.width / cellSize.width);
+      context.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      sessionData.forEach((d, i) => {
+        const column = i % numColumns;
+        const row = Math.floor(i / numColumns);
+        const x = column * cellSize.width;
+        const y = row * cellSize.height;
 
-  const handleFileChange = (event) => {
-    const selectedFileName = event.target.value;
-    setSelectedFile(selectedFileName);
-  };
+        context.fillStyle = d.isSilence ? "#ccc" : getColorForUtterance(d);
+        context.fillRect(x, y, cellSize.width, cellSize.height);
+        context.strokeRect(x, y, cellSize.width, cellSize.height);
 
-  const renderHeatmap = (cellWidth, cellHeight) => {
-    const svg = d3.select(svgRef.current);
-    if (!svg) return;
-
-    const width = svgRef.current.clientWidth;
-    const height = svgRef.current.clientHeight;
-
-    console.log('SVG Width:', width);
-    console.log('SVG Height:', height);
-
-    svg.selectAll("*").remove();
-
-    const numColumns = Math.floor(width / cellWidth);
-    const numRows = Math.ceil(sessionData.length / numColumns);
-
-    console.log('Num Columns:', numColumns);
-    console.log('Num Rows:', numRows);
-
-    const xScale = d3
-      .scaleBand()
-      .domain(d3.range(numColumns))
-      .range([0, width])
-      .padding(0);
-
-    const yScale = d3
-      .scaleBand()
-      .domain(d3.range(numRows))
-      .range([0, height])
-      .padding(0);
-
-    console.log('xScale Domain:', xScale.domain());
-    console.log('yScale Domain:', yScale.domain());
-
-    svg
-      .selectAll("rect")
-      .data(sessionData)
-      .enter()
-      .append("rect")
-      .attr("x", (_, i) => xScale(i % numColumns))
-      .attr("y", (_, i) => yScale(Math.floor(i / numColumns)))
-      .attr("width", cellWidth)
-      .attr("height", cellHeight)
-      .attr("fill", (d) => getColorForUtterance(d))
-      .attr("stroke", d3.color("#d3d3d3").darker(0)) // Grid lines between cells
-      .style("box-sizing", "border-box")
-      .on("mouseover", (event, d) => handleMouseEnter(d, event))
-      .on("mouseout", () => handleMouseLeave())
-      .on("click", (event, d) => handleClick(d));
+        if (d.containsTopWords) {
+          context.strokeStyle = "red";
+          context.lineWidth = 2;
+          context.beginPath();
+          context.moveTo(x + cellSize.width * 0.2, y + cellSize.height * 0.2);
+          context.lineTo(x + cellSize.width * 0.8, y + cellSize.height * 0.8);
+          context.moveTo(x + cellSize.width * 0.8, y + cellSize.height * 0.2);
+          context.lineTo(x + cellSize.width * 0.2, y + cellSize.height * 0.8);
+          context.stroke();
+        }
+      });
+    }
   };
 
   return (
     <HeatmapContainer>
-      <div className="file-dropdown">
-        <select value={selectedFile || ""} onChange={handleFileChange}>
-          {fileList.map((fileName) => (
-            <option key={fileName} value={fileName}>
-              {fileName}
+      <div className="file-select-container">
+        <label htmlFor="file-select">Select a file:</label>
+        <select
+          id="file-select"
+          value={selectedFile}
+          onChange={(e) => setSelectedFile(e.target.value)}
+        >
+          {fileList.map((file) => (
+            <option key={file} value={file}>
+              {file}
             </option>
           ))}
         </select>
       </div>
 
-      <HeatmapSvg ref={svgRef} />
-
-      {isLoading && <p>Loading...</p>}
+      {isLoading ? (
+        <div>Loading...</div>
+      ) : (
+        <HeatmapCanvas
+          ref={canvasRef}
+          sessionData={sessionData}
+          width={window.innerWidth * 0.8}
+          height={window.innerHeight * 0.8}
+          onTooltipData={handleMouseEnter}
+          onTooltipHide={handleMouseLeave}
+        />
+      )}
 
       {tooltipContent && (
-        <HeatmapTooltip
-          content={tooltipContent}
-          mouseX={mouseX}
-          mouseY={mouseY}
-        />
+        <HeatmapTooltip data={tooltipContent} position={{ x: mouseX, y: mouseY }} />
       )}
     </HeatmapContainer>
   );

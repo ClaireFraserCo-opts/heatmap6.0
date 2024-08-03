@@ -2,11 +2,13 @@
  * Fetches a list of JSON files and their data.
  * @returns {Promise<Array>} - An array of objects, each containing fileName and data.
  */
+// utils/fetchData.js
 export async function fetchData() {
   try {
     // Fetch the list of files
     const response = await fetch('/data/fileList.json');
     if (!response.ok) {
+      console.error('Failed to fetch fileList.json:', response.status, response.statusText);
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
     const fileList = await response.json();
@@ -21,6 +23,7 @@ export async function fetchData() {
       try {
         const res = await fetch(`/data/${file}`);
         if (!res.ok) {
+          console.error(`Failed to fetch ${file}:`, res.status, res.statusText);
           throw new Error(`HTTP error! Status: ${res.status}`);
         }
         const jsonData = await res.json();
