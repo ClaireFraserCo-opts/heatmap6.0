@@ -35,7 +35,7 @@ const HeatmapCanvas = forwardRef(({ sessionData, onTooltipData, onTooltipHide, w
         window.addEventListener('resize', handleResize);
 
         return () => window.removeEventListener('resize', handleResize);
-    }, [sessionData]);
+    }, [sessionData, handleResize]);
 
     useEffect(() => {
         const canvasElement = canvasRef.current;

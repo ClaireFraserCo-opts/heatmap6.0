@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from "react";
-import * as d3 from "d3";
 import HeatmapTooltip from "./HeatmapTooltip";
 import "../styles/HeatmapComponent.css";
 import { fetchData } from "../../utils/fetchData";
@@ -59,9 +58,11 @@ const HeatmapComponent = () => {
   };
 
   const fetchSessionData = async (fileName) => {
+    console.log('Fetching session data for:', fileName); // Debugging log
     setIsLoading(true);
     try {
-      const data = await fetchData();
+      const data = await fetchData(fileName); // Fetch only the selected file
+      console.log('Fetched data:', data); // Debugging log
       const selectedFileData = data.find((file) => file.fileName === fileName);
       if (selectedFileData && selectedFileData.data) {
         const combinedData = processSessionData([selectedFileData]);
@@ -77,7 +78,8 @@ const HeatmapComponent = () => {
       setIsLoading(false);
     }
   };
-
+  
+  
   const handleResize = debounce(() => {
     const canvasElement = canvasRef.current;
     if (!canvasElement) return;
@@ -98,7 +100,7 @@ const HeatmapComponent = () => {
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [sessionData]);
+  }, [sessionData, handleResize]);
 
   useEffect(() => {
     renderHeatmap();
